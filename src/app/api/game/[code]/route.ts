@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/../lib/prisma';
 
-type ParamsObj = { params: { code: string } } | { params: Promise<{ code: string }> };
-
 export async function GET(
   request: NextRequest,
-  ctx: ParamsObj
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const maybePromise = (ctx as { params: { code: string } } | { params: Promise<{ code: string }> }).params as
-      | { code: string }
-      | Promise<{ code: string }>;
-    const awaited = maybePromise instanceof Promise ? await maybePromise : maybePromise;
-    const { code } = awaited as { code: string };
+    const { code } = await params;
     
     const gameSession = await prisma.gameSession.findUnique({
       where: { code },
@@ -51,14 +45,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  ctx: ParamsObj
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const maybePromise = (ctx as { params: { code: string } } | { params: Promise<{ code: string }> }).params as
-      | { code: string }
-      | Promise<{ code: string }>;
-    const awaited = maybePromise instanceof Promise ? await maybePromise : maybePromise;
-    const { code } = awaited as { code: string };
+    const { code } = await params;
     const { playerName } = await request.json();
 
     if (!playerName) {
@@ -120,14 +110,10 @@ export async function POST(
 
 export async function PATCH(
   request: NextRequest,
-  ctx: ParamsObj
+  { params }: { params: Promise<{ code: string }> }
 ) {
   try {
-    const maybePromise = (ctx as { params: { code: string } } | { params: Promise<{ code: string }> }).params as
-      | { code: string }
-      | Promise<{ code: string }>;
-    const awaited = maybePromise instanceof Promise ? await maybePromise : maybePromise;
-    const { code } = awaited as { code: string };
+    const { code } = await params;
     const { phase, currentPromptId } = await request.json();
 
     const gameSession = await prisma.gameSession.findUnique({ where: { code } });
