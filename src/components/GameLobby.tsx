@@ -25,7 +25,7 @@ export default function GameLobby({ onCreateGame, onJoinGame, loading, error, on
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Who's Most Likely To?</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Who&apos;s Most Likely To?</h1>
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-md">

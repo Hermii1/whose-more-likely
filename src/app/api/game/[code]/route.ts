@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/../lib/prisma';
 
+type ParamsObj = { params: { code: string } } | { params: Promise<{ code: string }> };
+
 export async function GET(
   request: NextRequest,
-  ctx: { params: { code: string } } | { params: Promise<{ code: string }> }
+  ctx: ParamsObj
 ) {
   try {
-    const maybePromise: any = (ctx as any).params;
-    const awaited = typeof maybePromise?.then === 'function' ? await maybePromise : maybePromise;
+    const maybePromise = (ctx as { params: { code: string } } | { params: Promise<{ code: string }> }).params as
+      | { code: string }
+      | Promise<{ code: string }>;
+    const awaited = maybePromise instanceof Promise ? await maybePromise : maybePromise;
     const { code } = awaited as { code: string };
     
     const gameSession = await prisma.gameSession.findUnique({
@@ -47,11 +51,13 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  ctx: { params: { code: string } } | { params: Promise<{ code: string }> }
+  ctx: ParamsObj
 ) {
   try {
-    const maybePromise: any = (ctx as any).params;
-    const awaited = typeof maybePromise?.then === 'function' ? await maybePromise : maybePromise;
+    const maybePromise = (ctx as { params: { code: string } } | { params: Promise<{ code: string }> }).params as
+      | { code: string }
+      | Promise<{ code: string }>;
+    const awaited = maybePromise instanceof Promise ? await maybePromise : maybePromise;
     const { code } = awaited as { code: string };
     const { playerName } = await request.json();
 
@@ -73,11 +79,13 @@ export async function POST(
       );
     }
 
-    // Create a user for this player
+    // Create a user for this player with a unique email to satisfy unique constraint
+    const slug = playerName.toLowerCase().replace(/\s+/g, '.');
+    const uniqueSuffix = `${code}.${Date.now()}`;
     const user = await prisma.user.create({
       data: {
         name: playerName,
-        email: `${playerName.toLowerCase().replace(/\s+/g, '.')}@game.local`,
+        email: `${slug}.${uniqueSuffix}@game.local`,
       }
     });
 
@@ -112,11 +120,13 @@ export async function POST(
 
 export async function PATCH(
   request: NextRequest,
-  ctx: { params: { code: string } } | { params: Promise<{ code: string }> }
+  ctx: ParamsObj
 ) {
   try {
-    const maybePromise: any = (ctx as any).params;
-    const awaited = typeof maybePromise?.then === 'function' ? await maybePromise : maybePromise;
+    const maybePromise = (ctx as { params: { code: string } } | { params: Promise<{ code: string }> }).params as
+      | { code: string }
+      | Promise<{ code: string }>;
+    const awaited = maybePromise instanceof Promise ? await maybePromise : maybePromise;
     const { code } = awaited as { code: string };
     const { phase, currentPromptId } = await request.json();
 
@@ -128,7 +138,8 @@ export async function PATCH(
       );
     }
 
-    const data: any = {};
+    type UpdatePayload = { phase?: 'LOBBY'|'QUESTION'|'VOTING'|'RESULTS'; currentPromptId?: string | null };
+    const data: UpdatePayload = {};
     if (phase) data.phase = phase;
     if (typeof currentPromptId !== 'undefined') data.currentPromptId = currentPromptId;
 
@@ -142,7 +153,7 @@ export async function PATCH(
         }
       });
       return NextResponse.json(updated);
-    } catch (e) {
+    } catch {
       // If schema fields (phase/currentPromptId) are missing, return existing state instead of failing
       const fallback = await prisma.gameSession.findUnique({
         where: { id: gameSession.id },

@@ -89,13 +89,14 @@ export default function Game({ gameSession, players, prompts, onSubmitVote, onLe
     } catch {}
   };
 
+  type VoteRecord = { promptId: string; targetId: string };
   const computeResults = () => {
     const currentId = currentPrompt?.id;
-    const votes = (gameSession as any).votes || [];
-    const filtered = currentId ? votes.filter((v: any) => v.promptId === currentId) : [];
+    const votes = (gameSession as unknown as { votes?: VoteRecord[] }).votes || [];
+    const filtered = currentId ? votes.filter((v: VoteRecord) => v.promptId === currentId) : [];
     const total = filtered.length || 0;
     const counts: Record<string, number> = {};
-    filtered.forEach((v: any) => {
+    filtered.forEach((v: VoteRecord) => {
       counts[v.targetId] = (counts[v.targetId] || 0) + 1;
     });
     const results = players.map((p) => ({

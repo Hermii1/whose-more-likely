@@ -29,7 +29,7 @@ export default function Home() {
       if (currentGame) refreshGame();
     }, 1500);
     return () => clearInterval(poll);
-  }, [currentGame]);
+  }, [currentGame, refreshGame]);
 
   const handleLeaveGame = () => {
     window.location.reload();
