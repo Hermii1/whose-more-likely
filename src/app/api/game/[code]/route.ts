@@ -8,6 +8,14 @@ export async function GET(
   try {
     const { code } = await params;
     
+    // Skip database operations during build
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
+    
     const gameSession = await prisma.gameSession.findUnique({
       where: { code },
       include: {
@@ -50,6 +58,14 @@ export async function POST(
   try {
     const { code } = await params;
     const { playerName } = await request.json();
+
+    // Skip database operations during build
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     if (!playerName) {
       return NextResponse.json(
@@ -115,6 +131,14 @@ export async function PATCH(
   try {
     const { code } = await params;
     const { phase, currentPromptId } = await request.json();
+
+    // Skip database operations during build
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: 'Database not configured' },
+        { status: 503 }
+      );
+    }
 
     const gameSession = await prisma.gameSession.findUnique({ where: { code } });
     if (!gameSession) {
