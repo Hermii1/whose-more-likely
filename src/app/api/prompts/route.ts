@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/../lib/prisma';
+import { createPrismaClient } from '@/../lib/prisma';
 
 export async function GET() {
+  const prisma = createPrismaClient();
   try {
     const prompts = await prisma.prompt.findMany({
       orderBy: {
@@ -16,5 +17,19 @@ export async function GET() {
       { error: 'Failed to fetch prompts' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
+}
+
+// Add OPTIONS method for CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }

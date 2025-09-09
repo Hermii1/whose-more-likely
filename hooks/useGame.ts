@@ -120,8 +120,9 @@ export const useGame = () => {
     try {
       const response = await fetch(`/api/game/${currentGame.code}`);
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to fetch game');
+        // Don't set error for refresh failures, just log them
+        console.warn('Failed to refresh game:', response.status);
+        return null;
       }
       const game = await response.json();
       setCurrentGame(game);
@@ -129,7 +130,8 @@ export const useGame = () => {
       if (game.phase) setPhase(game.phase);
       return game;
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to fetch game');
+      // Don't set error for refresh failures, just log them
+      console.warn('Failed to refresh game:', error);
       return null;
     }
   };

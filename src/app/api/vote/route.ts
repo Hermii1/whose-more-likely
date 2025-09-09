@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/../lib/prisma';
+import { createPrismaClient } from '@/../lib/prisma';
 
 export async function POST(request: NextRequest) {
+  const prisma = createPrismaClient();
   try {
     const { gameSessionId, promptId, voterId, targetId } = await request.json();
 
@@ -51,5 +52,19 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to submit vote' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
+}
+
+// Add OPTIONS method for CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/../lib/prisma';
+import { createPrismaClient } from '@/../lib/prisma';
 
 // Define the context type for the route
 interface RouteContext {
@@ -20,6 +20,7 @@ export async function GET(
   request: NextRequest,
   context: RouteContext // Use context instead of destructuring params directly
 ) {
+  const prisma = createPrismaClient();
   try {
     const { code } = await context.params; // Await the params promise
     
@@ -62,6 +63,8 @@ export async function GET(
       { error: 'Failed to fetch game' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -69,6 +72,7 @@ export async function POST(
   request: NextRequest,
   context: RouteContext // Use context instead of destructuring params directly
 ) {
+  const prisma = createPrismaClient();
   try {
     const { code } = await context.params; // Await the params promise
     const { playerName } = await request.json();
@@ -134,6 +138,8 @@ export async function POST(
       { error: 'Failed to join game' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -141,6 +147,7 @@ export async function PATCH(
   request: NextRequest,
   context: RouteContext // Use context instead of destructuring params directly
 ) {
+  const prisma = createPrismaClient();
   try {
     const { code } = await context.params; // Await the params promise
     const { phase, currentPromptId } = await request.json();
@@ -192,6 +199,8 @@ export async function PATCH(
       { error: 'Failed to update game' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/../lib/prisma';
+import { createPrismaClient } from '@/../lib/prisma';
 
 export async function POST(request: NextRequest) {
+  const prisma = createPrismaClient();
   try {
     const { playerName } = await request.json();
 
@@ -51,10 +52,13 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to create game' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
 export async function GET() {
+  const prisma = createPrismaClient();
   try {
     const games = await prisma.gameSession.findMany({
       where: { isActive: true },
@@ -74,6 +78,8 @@ export async function GET() {
       { error: 'Failed to fetch games' },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

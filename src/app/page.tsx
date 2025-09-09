@@ -25,10 +25,18 @@ export default function Home() {
   // Removed unused isInitializing state
 
   useEffect(() => {
-    const poll = setInterval(() => {
-      if (currentGame) refreshGame();
-    }, 1500);
-    return () => clearInterval(poll);
+    if (!currentGame) return;
+    
+    // Start polling after a delay to let game creation complete
+    const timeout = setTimeout(() => {
+      const poll = setInterval(() => {
+        refreshGame();
+      }, 5000); // Increased to 5 seconds
+      
+      return () => clearInterval(poll);
+    }, 3000); // Wait 3 seconds before starting polling
+    
+    return () => clearTimeout(timeout);
   }, [currentGame, refreshGame]);
 
   const handleLeaveGame = () => {

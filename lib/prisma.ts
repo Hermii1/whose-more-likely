@@ -1,18 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+// Create a new Prisma client for each request to avoid connection pooling issues with Supabase
+export const createPrismaClient = () => {
+  // Use direct connection URL (port 5432) instead of pooled connection (port 6543)
+  const directUrl = process.env.DATABASE_URL?.replace(':6543/', ':5432/');
+  
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    datasources: {
+      db: { 
+        url: directUrl || process.env.DATABASE_URL,
+      },
+    },
+  });
 };
 
-const datasourceUrl: string | undefined = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
-
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  ...(datasourceUrl && {
-    datasources: {
-      db: { url: datasourceUrl },
-    },
-  }),
-});
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+// For backward compatibility, export a default instance
+export const prisma = createPrismaClient();

@@ -1,7 +1,14 @@
 // Simple JS script to test Supabase Postgres connectivity via Prisma
 const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
+// Create a new Prisma client to avoid connection pooling issues
+const prisma = new PrismaClient({
+  datasources: {
+    db: { 
+      url: process.env.DATABASE_URL?.replace(':6543/', ':5432/') || process.env.DATABASE_URL,
+    },
+  },
+});
 
 async function main() {
   try {

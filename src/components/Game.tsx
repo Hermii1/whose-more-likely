@@ -33,10 +33,10 @@ interface GameProps {
   onUpdateState?: (next: { phase?: 'LOBBY'|'QUESTION'|'VOTING'|'RESULTS'; currentPromptId?: string|null; }) => Promise<void> | void;
 }
 
-export default function Game({ gameSession, players, prompts, onSubmitVote, onLeaveGame, loading, error, phase = 'QUESTION', onUpdateState }: GameProps) {
+export default function Game({ gameSession, players, prompts, onSubmitVote, onLeaveGame, loading, error, phase = 'LOBBY', onUpdateState }: GameProps) {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [localPhase, setLocalPhase] = useState<'LOBBY' | 'QUESTION' | 'VOTING' | 'RESULTS'>(phase);
+  const [localPhase, setLocalPhase] = useState<'LOBBY' | 'QUESTION' | 'VOTING' | 'RESULTS'>(phase || gameSession.phase || 'LOBBY');
   
   const currentPrompt = prompts[currentPromptIndex];
   
@@ -146,6 +146,30 @@ export default function Game({ gameSession, players, prompts, onSubmitVote, onLe
           {/* Main Game Area */}
           <div className="md:col-span-2">
             <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+              {(localPhase === 'LOBBY') && (
+                <div>
+                  <div className="text-center mb-8">
+                    <div className="text-2xl font-semibold text-black mb-6 p-6 bg-green-50 rounded-lg border border-green-100 min-h-[120px] flex items-center justify-center">
+                      Waiting for players to join...
+                    </div>
+                    <p className="text-sm text-gray-900">Game Code: {gameSession.code}</p>
+                    <p className="text-sm text-gray-700 mt-2">{players.length} player(s) in game</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <button 
+                      onClick={() => {
+                        setLocalPhase('QUESTION');
+                        if (onUpdateState) onUpdateState({ phase: 'QUESTION' });
+                      }} 
+                      className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                      disabled={prompts.length === 0}
+                    >
+                      {prompts.length === 0 ? 'Loading prompts...' : 'Start Game'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {(localPhase === 'QUESTION') && (
                 <div>
                   <div className="text-center mb-8">
