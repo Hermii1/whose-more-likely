@@ -1,17 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/../lib/prisma';
 
+// Define the context type for the route
+interface RouteContext {
+  params: Promise<{ code: string }>;
+}
+
+// Helper function to check if we can use database
+const canUseDatabase = () => {
+  // During build, skip database operations
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return false;
+  }
+  // Check if database is configured
+  return !!process.env.DATABASE_URL;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
+  context: RouteContext // Use context instead of destructuring params directly
 ) {
   try {
-    const { code } = await params;
+    const { code } = await context.params; // Await the params promise
     
-    // Skip database operations during build
-    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    if (!canUseDatabase()) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not available during build' },
         { status: 503 }
       );
     }
@@ -53,16 +67,15 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
+  context: RouteContext // Use context instead of destructuring params directly
 ) {
   try {
-    const { code } = await params;
+    const { code } = await context.params; // Await the params promise
     const { playerName } = await request.json();
 
-    // Skip database operations during build
-    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    if (!canUseDatabase()) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not available during build' },
         { status: 503 }
       );
     }
@@ -85,7 +98,7 @@ export async function POST(
       );
     }
 
-    // Create a user for this player with a unique email to satisfy unique constraint
+    // Create a user for this player
     const slug = playerName.toLowerCase().replace(/\s+/g, '.');
     const uniqueSuffix = `${code}.${Date.now()}`;
     const user = await prisma.user.create({
@@ -126,16 +139,15 @@ export async function POST(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
+  context: RouteContext // Use context instead of destructuring params directly
 ) {
   try {
-    const { code } = await params;
+    const { code } = await context.params; // Await the params promise
     const { phase, currentPromptId } = await request.json();
 
-    // Skip database operations during build
-    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    if (!canUseDatabase()) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not available during build' },
         { status: 503 }
       );
     }
@@ -164,7 +176,7 @@ export async function PATCH(
       });
       return NextResponse.json(updated);
     } catch {
-      // If schema fields (phase/currentPromptId) are missing, return existing state instead of failing
+      // If schema fields are missing, return existing state
       const fallback = await prisma.gameSession.findUnique({
         where: { id: gameSession.id },
         include: {
@@ -181,4 +193,16 @@ export async function PATCH(
       { status: 500 }
     );
   }
+}
+
+// Add OPTIONS method for CORS preflight requests
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
 }
