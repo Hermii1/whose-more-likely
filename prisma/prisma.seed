@@ -1,0 +1,41 @@
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Create sample prompts
+  const prompts = [
+    'Who is most likely to forget their own birthday?',
+    'Who is most likely to become a millionaire?',
+    'Who is most likely to get lost in their own hometown?',
+    'Who is most likely to become famous on TikTok?',
+    'Who is most likely to survive a zombie apocalypse?',
+    'Who is most likely to accidentally send a text to the wrong person?',
+    'Who is most likely to be late to their own wedding?',
+    'Who is most likely to win an Olympic medal?',
+    'Who is most likely to eat dessert first?',
+    'Who is most likely to become a superhero?',
+  ];
+
+  for (const text of prompts) {
+    await prisma.prompt.upsert({
+      where: { text },
+      update: {},
+      create: {
+        text,
+        category: 'general',
+      },
+    });
+  }
+
+  console.log('Database seeded successfully');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

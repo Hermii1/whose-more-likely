@@ -1,0 +1,110 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // Use a non-pooled connection for interactive transactions
+  directUrl = env("DIRECT_URL")
+}
+
+// Your models remain the same...
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  votesCast     Vote[]    @relation("VoteVoter")
+  votesReceived Vote[]    @relation("VoteTarget")
+  gameSessions  GameSessionPlayer[]
+}
+
+model GameSession {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  players   GameSessionPlayer[]
+  votes     Vote[]
+  isActive  Boolean  @default(true)
+  phase     GamePhase @default(LOBBY)
+  currentPromptId String?
+  currentPrompt   Prompt?    @relation(fields: [currentPromptId], references: [id])
+}
+
+model GameSessionPlayer {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  gameSessionId  String
+  gameSession    GameSession  @relation(fields: [gameSessionId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, gameSessionId])
+}
+
+model Prompt {
+  id        String   @id @default(cuid())
+  text      String
+  category  String
+  votes     Vote[]
+  createdAt DateTime @default(now())
+  // Back relation for GameSession.currentPrompt
+  currentInSessions GameSession[]
+}
+
+model Vote {
+  id             String       @id @default(cuid())
+  gameSessionId  String
+  gameSession    GameSession  @relation(fields: [gameSessionId], references: [id])
+  promptId       String
+  prompt         Prompt       @relation(fields: [promptId], references: [id])
+  voterId        String
+  voter          User         @relation("VoteVoter", fields: [voterId], references: [id])
+  targetId       String
+  target         User         @relation("VoteTarget", fields: [targetId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@unique([gameSessionId, promptId, voterId])
+}
+
+enum GamePhase {
+  LOBBY
+  QUESTION
+  VOTING
+  RESULTS
+}
