@@ -22,7 +22,7 @@ export default function Home() {
     setError
   } = useGame();
 
-  const [isInitializing, setIsInitializing] = useState(false);
+  // Removed unused isInitializing state
 
   useEffect(() => {
     const poll = setInterval(() => {
